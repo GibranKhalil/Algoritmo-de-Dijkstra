@@ -1,14 +1,19 @@
 package GUI;
 
+import Models.Grafo;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.Normalizer;
+import java.util.Arrays;
 
 public class ControlPanel extends JPanel {
     public ControlPanel(MapPanel mapPanel) {
+        Grafo grafo = new Grafo(13);
         setLayout(new BorderLayout());
         setBackground(null);
         Border topBorder = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK);
@@ -69,6 +74,10 @@ public class ControlPanel extends JPanel {
         clearButton.setContentAreaFilled(false);
         buttonPanel.add(clearButton);
 
+        JTextField caminhoMinimo = new JTextField(10);
+        caminhoMinimo.setEditable(false);
+        caminhoMinimo.setHorizontalAlignment(JTextField.CENTER);
+        buttonPanel.add(caminhoMinimo);
 
         JButton searchButton = new JButton("Buscar");
         searchButton.setBackground(new Color(61, 99, 221));
@@ -78,19 +87,69 @@ public class ControlPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 String origem = (String) originComboBox.getSelectedItem();
                 String destino = (String) destinationComboBox.getSelectedItem();
+                inicializarGrafo(grafo);
+
+                origem = removerAcentos(origem.toLowerCase());
+                destino = removerAcentos(destino.toLowerCase());
+                int[] distancias = grafo.dijkstra(origem);
+                for (int i = 0; i < 13; i++) {
+                    if(destino.equals(grafo.getDadosVertices()[i])) {
+                        caminhoMinimo.setText(distancias[i] + " Km");
+                        System.out.println("Menor caminho de " + origem + " para " + grafo.getDadosVertices()[i] + ": " + distancias[i]);
+                    }
+                }
             }
         });
         buttonPanel.add(searchButton);
 
         add(buttonPanel, BorderLayout.EAST); // Posiciona buttonPanel à direita
+
+        clearButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                originComboBox.setSelectedIndex(0);
+                destinationComboBox.setSelectedIndex(0);
+                caminhoMinimo.setText("");
+                mapPanel.restaurarCoresOriginais();
+            }
+        });
     }
 
     private String[] getCities() {
-        return new String[] {
-                "São José do Rio Preto", "Araraquara", "Ribeirão Preto",
+        return new String[]{
+                "", "São José do Rio Preto", "Araraquara", "Ribeirão Preto",
                 "Araçatuba", "Piracicaba", "Campinas", "São José dos Campos",
                 "Marília", "Bauru", "Sorocaba", "Presidente Prudente",
                 "São Paulo", "Santos"
         };
+    }
+
+    private static void inicializarGrafo(Grafo grafo) {
+        String[] cidades = MapControl.getCidades();
+        //System.out.println(Arrays.toString(cidades));
+        for (int i = 0; i < cidades.length; i++){
+            grafo.adicionarDadosVertice(i, removerAcentos(cidades[i].replace(" ", "").toLowerCase()));
+        }
+
+        grafo.adicionarAresta(4, 0, 168);
+        grafo.adicionarAresta(11, 9, 222);
+        grafo.adicionarAresta(0, 11, 185);
+        grafo.adicionarAresta(6, 7, 191);
+        grafo.adicionarAresta(1, 11, 71);
+        grafo.adicionarAresta(11, 8, 109);
+        grafo.adicionarAresta(12, 8, 78);
+        grafo.adicionarAresta(3, 7, 105);
+        grafo.adicionarAresta(7, 10, 244);
+        grafo.adicionarAresta(2, 10, 472);
+        grafo.adicionarAresta(8, 10, 100);
+        grafo.adicionarAresta(8, 5, 85);
+
+    }
+
+    public static String removerAcentos(String texto) {
+        String textoNormalizado = Normalizer.normalize(texto, Normalizer.Form.NFD);
+        textoNormalizado = textoNormalizado.replaceAll("[^\\p{ASCII}]", "");
+        textoNormalizado = textoNormalizado.replaceAll("\\s", "");
+        return textoNormalizado;
     }
 }

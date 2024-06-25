@@ -146,4 +146,7 @@ public class MapPanel extends  JPanel{
             g2d.drawString(distance + "KM", midX, midY);
         }
 
+        public void restaurarCoresOriginais(){
+            repaint();
+        }
 }
