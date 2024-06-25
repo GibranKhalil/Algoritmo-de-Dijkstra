@@ -1,6 +1,7 @@
 package Models;
 
 import java.text.Normalizer;
+import java.util.Arrays;
 
 public class Grafo {
         private int[][] matrizAdjacencia;
@@ -40,7 +41,6 @@ public class Grafo {
         public int[] dijkstra(String dadosVerticeInicial) {
             String novoDado =  removerAcentos(dadosVerticeInicial.replace(" ", "").toLowerCase());
             int verticeInicial = encontrarIndice(novoDado);
-            System.out.println(verticeInicial);
             int[] distancias = new int[tamanho];
             boolean[] visitados = new boolean[tamanho];
 
@@ -57,6 +57,7 @@ public class Grafo {
             return distancias;
         }
 
+
         private boolean verticeValido(int vertice) {
             return vertice >= 0 && vertice < tamanho;
         }
@@ -68,7 +69,7 @@ public class Grafo {
             distancias[verticeInicial] = 0;
         }
 
-        private int encontrarIndice(String dados) {
+        public int encontrarIndice(String dados) {
             for (int i = 0; i < tamanho; i++) {
                 if (dadosVertices[i].equals(dados)) {
                     return i;
@@ -101,5 +102,63 @@ public class Grafo {
                 }
             }
         }
+
+    private void inicializarDistanciasPredecessores(int[] distancias, int[] predecessores, int verticeInicial) {
+        for (int i = 0; i < tamanho; i++) {
+            distancias[i] = Integer.MAX_VALUE;
+            predecessores[i] = -1;
+        }
+        distancias[verticeInicial] = 0;
+    }
+
+    private int obterVerticeMaisProximo(int[] distancias, boolean[] visitados) {
+        int verticeMaisProximo = -1;
+        for (int i = 0; i < tamanho; i++) {
+            if (!visitados[i] && (verticeMaisProximo == -1 || distancias[i] < distancias[verticeMaisProximo])) {
+                verticeMaisProximo = i;
+            }
+        }
+        return verticeMaisProximo;
+    }
+
+    private String construirCaminho(int verticeFinal, int[] predecessores, int[] distancias) {
+        StringBuilder caminho = new StringBuilder();
+        for (int vertice = verticeFinal; vertice != -1; vertice = predecessores[vertice]) {
+            if (caminho.length() > 0) {
+                caminho.insert(0, "->");
+            }
+            caminho.insert(0, dadosVertices[vertice]);
+        }
+        return caminho.toString();
+    }
+
+    public String obterCaminhoMaisCurto(int verticeInicial, int verticeFinal) {
+        int[] distancias = new int[tamanho];
+        int[] predecessores = new int[tamanho];
+        boolean[] visitados = new boolean[tamanho];
+
+        inicializarDistanciasPredecessores(distancias, predecessores, verticeInicial);
+
+        for (int i = 0; i < tamanho; i++) {
+            int verticeMaisProximo = obterVerticeMaisProximo(distancias, visitados);
+            if (verticeMaisProximo == -1) break;
+            visitados[verticeMaisProximo] = true;
+            atualizarDistancias(verticeMaisProximo, distancias, predecessores, visitados);
+        }
+
+        return construirCaminho(verticeFinal, predecessores, distancias);
+    }
+
+    private void atualizarDistancias(int vertice, int[] distancias, int[] predecessores, boolean[] visitados) {
+        for (int i = 0; i < tamanho; i++) {
+            if (matrizAdjacencia[vertice][i] != 0 && !visitados[i]) {
+                int novaDistancia = distancias[vertice] + matrizAdjacencia[vertice][i];
+                if (novaDistancia < distancias[i]) {
+                    distancias[i] = novaDistancia;
+                    predecessores[i] = vertice;
+                }
+            }
+        }
+    }
     }
 

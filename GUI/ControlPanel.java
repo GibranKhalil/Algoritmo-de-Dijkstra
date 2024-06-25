@@ -14,6 +14,7 @@ import java.util.Arrays;
 public class ControlPanel extends JPanel {
     public ControlPanel(MapPanel mapPanel) {
         Grafo grafo = new Grafo(13);
+
         setLayout(new BorderLayout());
         setBackground(null);
         Border topBorder = BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK);
@@ -91,6 +92,10 @@ public class ControlPanel extends JPanel {
 
                 origem = removerAcentos(origem.toLowerCase());
                 destino = removerAcentos(destino.toLowerCase());
+                String valores  = grafo.obterCaminhoMaisCurto(grafo.encontrarIndice(origem), grafo.encontrarIndice(destino));
+                String[] caminho = valores.split("->");
+                mapPanel.setCaminho(caminho);
+
                 int[] distancias = grafo.dijkstra(origem);
                 for (int i = 0; i < 13; i++) {
                     if(destino.equals(grafo.getDadosVertices()[i])) {
@@ -111,6 +116,8 @@ public class ControlPanel extends JPanel {
                 destinationComboBox.setSelectedIndex(0);
                 caminhoMinimo.setText("");
                 mapPanel.restaurarCoresOriginais();
+                String[] vazio = new String[0];
+                mapPanel.setCaminho(vazio);
             }
         });
     }

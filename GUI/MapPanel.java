@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
+import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,16 @@ public class MapPanel extends  JPanel{
         private String destinoSelecionado;
         private final Map<String, Point> cities = new HashMap<>();
         private final Map<String, Integer> distances = new HashMap<>();
+        private String[] caminho;
+
+        public String[] getCaminho() {
+            return caminho;
+        }
+
+        public void setCaminho(String[] caminho) {
+            this.caminho = caminho;
+            repaint();
+        }
 
         public Map<String, Point> getCidades(){
             return cities;
@@ -61,6 +72,12 @@ public class MapPanel extends  JPanel{
             distances.put("São Paulo-Santos", 85);
         }
 
+        public static String removerAcentos(String texto) {
+            String textoNormalizado = Normalizer.normalize(texto, Normalizer.Form.NFD);
+            textoNormalizado = textoNormalizado.replaceAll("[^\\p{ASCII}]", "");
+            return textoNormalizado;
+        }
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -77,37 +94,60 @@ public class MapPanel extends  JPanel{
             drawCities(g2d);
         }
 
-        private void drawConnections(Graphics2D g2d) {
-            // Definição das conexões entre as cidades
-            String[][] connections = {
-                    {"São José do Rio Preto", "Araraquara"},
-                    {"Araraquara", "Campinas"},
-                    {"Araçatuba", "Bauru"},
-                    {"Piracicaba", "Campinas"},
-                    {"Campinas", "São Paulo"},
-                    {"Campinas", "Ribeirão Preto"},
-                    {"São José dos Campos", "São Paulo"},
-                    {"Marília", "Bauru"},
-                    {"Bauru", "Sorocaba"},
-                    {"Presidente Prudente", "Sorocaba"},
-                    {"São Paulo", "Sorocaba"},
-                    {"São Paulo", "Santos"}
-            };
+    private void drawConnections(Graphics2D g2d) {
+        String[][] connections = {
+                {"São José do Rio Preto", "Araraquara"},
+                {"Araraquara", "Campinas"},
+                {"Araçatuba", "Bauru"},
+                {"Piracicaba", "Campinas"},
+                {"Campinas", "São Paulo"},
+                {"Campinas", "Ribeirão Preto"},
+                {"São José dos Campos", "São Paulo"},
+                {"Marília", "Bauru"},
+                {"Bauru", "Sorocaba"},
+                {"Presidente Prudente", "Sorocaba"},
+                {"São Paulo", "Sorocaba"},
+                {"São Paulo", "Santos"}
+        };
 
-            g2d.setColor(Color.BLACK);
-            for (String[] connection : connections) {
-                Point p1 = cities.get(connection[0]);
-                Point p2 = cities.get(connection[1]);
-                if (p1 != null && p2 != null) {
-                    Line2D linha = new Line2D.Double(p1.x + 25, p1.y + 25, p2.x + 25, p2.y + 25);
-                    g2d.draw(linha);
-                    // Desenha as distâncias
-                    String key = connection[0] + "-" + connection[1];
-                    int distance = distances.getOrDefault(key, 0);
-                    drawDistance(g2d, p1, p2, distance);
+        for (String[] connection : connections) {
+            Point p1 = cities.get(connection[0]);
+            Point p2 = cities.get(connection[1]);
+            if (p1 != null && p2 != null) {
+                Line2D linha = new Line2D.Double(p1.x + 25, p1.y + 25, p2.x + 25, p2.y + 25);
+                if (isConnectionInPath(connection[0], connection[1])) {
+                    g2d.setColor(Color.RED); // Cor vermelha para conexões no caminho
+                } else {
+                    g2d.setColor(Color.BLACK); // Cor preta para outras conexões
                 }
+
+                g2d.draw(linha);
+
+                String key = connection[0] + "-" + connection[1];
+                int distance = distances.getOrDefault(key, distances.getOrDefault(connection[1] + "-" + connection[0], 0));
+                drawDistance(g2d, p1, p2, distance);
             }
         }
+    }
+
+    private boolean isConnectionInPath(String city1, String city2) {
+        if (caminho == null || caminho.length < 2) {
+            return false;
+        }
+
+        city1 = removerAcentos(city1).replace(" ", "").toLowerCase();
+        city2 = removerAcentos(city2).replace(" ", "").toLowerCase();
+
+        for (int i = 0; i < caminho.length - 1; i++) {
+            String start = removerAcentos(caminho[i]).replace(" ", "").toLowerCase();
+            String end = removerAcentos(caminho[i + 1]).replace(" ", "").toLowerCase();
+            if ((start.equals(city1) && end.equals(city2)) || (start.equals(city2) && end.equals(city1))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
         private void drawCities(Graphics2D g2d) {
             for (Map.Entry<String, Point> entry : cities.entrySet()) {
